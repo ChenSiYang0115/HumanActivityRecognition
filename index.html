@@ -10,7 +10,7 @@
     <table>
         <tr>
             <td>X</td>
-            <td><p id="X"></p></td>
+            <td><p id="x"></p></td>
         </tr>
         <tr>
             <td>Y</td>
@@ -26,6 +26,8 @@
 var x = document.querySelector("#x");
 var y = document.querySelector("#y");
 var z = document.querySelector("#z");
+
+// Check if Accelerometer can be accessed
 if (window.DeviceMotionEvent == undefined) {
     //No accelerometer is present. Use buttons. 
     alert("no accelerometer");
@@ -42,7 +44,6 @@ function accelerometerUpdate(e) {
     x.innerText = aX;
     y.innerText = aY;
     z.innerText = aZ;
-
  }
  </script>
 </html>
