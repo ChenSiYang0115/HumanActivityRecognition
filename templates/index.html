@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <title>Deployment</title>
+</head>
+
+<body">
+    <table action="/result" method="post">
+        <tr>
+            <td>X</td>
+            <td><p id="x"></p></td>
+        </tr>
+        <tr>
+            <td>Y</td>
+            <td><p id="y"></p></td>
+        </tr>
+        <tr>
+            <td>Z</td>
+            <td><p id="z"></p></td>
+        </tr>
+    </table>
+    <h1 id="prediction"></h1>
+</body>
+<script>
+var x = document.querySelector("#x");
+var y = document.querySelector("#y");
+var z = document.querySelector("#z");
+var predictionResult = document.querySelector("#prediction"); // Fetch the <h1> element with the "prediction" ID
+
+// Check if Accelerometer can be accessed
+if (window.DeviceMotionEvent == undefined) {
+    //No accelerometer is present. Use buttons. 
+    alert("no accelerometer");
+}
+else {
+    alert("accelerometer found");
+    window.addEventListener("devicemotion", accelerometerUpdate, true);
+}
+
+function accelerometerUpdate(e) {
+    var aX = event.accelerationIncludingGravity.x*1;
+    var aY = event.accelerationIncludingGravity.y*1;
+    var aZ = event.accelerationIncludingGravity.z*1;
+
+    x.innerText = aX;
+    y.innerText = aY;
+    z.innerText = aZ;
+
+     // Send accelerometer data to Flask server
+     sendDataToServer({ x: aX, y: aY, z: aZ });
+ }
+ 
+function sendDataToServer(data) {
+
+    // Make an AJAX POST request to your Flask server
+    fetch('http://127.0.0.1:5000/result', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+        .then(response => response.text())
+        .then(data => {
+            predictionResult.innerText = "Prediction: " + data;
+            console.log(data)
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+ </script>
+</html>
