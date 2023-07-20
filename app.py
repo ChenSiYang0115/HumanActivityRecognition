@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS  # Import the CORS module
 import pandas as pd
 import numpy as np
@@ -14,7 +14,7 @@ model = pickle.load(open('model.pkl', 'rb'))
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return send_file('index.html')
 
 @app.route('/result', methods=['POST'])
 def receive_accelerometer_data():
@@ -64,14 +64,15 @@ def preprocess_data(data):
     x_peaks, _ = find_peaks(df['x'], height=0)
     y_peaks, _ = find_peaks(df['y'], height=0)
     z_peaks, _ = find_peaks(df['z'], height=0)
+    print("x_peaks", x_peaks)
+    print("y_peaks", y_peaks)
+    print("z_peaks", z_peaks)
 
     # Calculate Time Between Peaks for each axis
     df['XPEAK'] = np.mean(np.diff(time_values[x_peaks]))
     df['YPEAK'] = np.mean(np.diff(time_values[y_peaks]))
     df['ZPEAK'] = np.mean(np.diff(time_values[z_peaks]))
 
-    # Calculate Binned Distribution for each axis
-    num_bins = 10
     # Calculate Binned Distribution for each axis
     num_bins = 10
     x_bins = calculate_binned_distribution(df['x'], num_bins)
