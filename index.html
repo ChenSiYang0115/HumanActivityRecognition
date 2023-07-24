@@ -55,7 +55,7 @@ function accelerometerUpdate(e) {
 function sendDataToServer(data) {
 
     // Make an AJAX POST request to your Flask server
-    fetch('http://127.0.0.1:5000/result', {
+    fetch('https://25db-42-190-231-26.ngrok.io/result', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
