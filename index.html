@@ -1,12 +1,19 @@
-
 <!DOCTYPE html>
 <html >
 <head>
   <meta charset="UTF-8">
-  <title>Deployment</title>
+  <title~~`>Deployment</title>
 </head>
 
 <body">
+    <label for="time-range">Select Time Range:</label>
+    <select id="time-range">
+      <option value="1">1 hour</option>
+      <option value="2">2 hours</option>
+    </select>
+    <button id="start-btn" onclick="startDataCollection()">Start Data Collection</button>
+    <button id="stop-btn" onclick="stopDataCollection()" disabled>Stop Data Collection</button>
+
     <table action="/result" method="post">
         <tr>
             <td>X</td>
@@ -28,47 +35,97 @@ var x = document.querySelector("#x");
 var y = document.querySelector("#y");
 var z = document.querySelector("#z");
 var predictionResult = document.querySelector("#prediction"); // Fetch the <h1> element with the "prediction" ID
+let dataCollectionTimer;
+let timeRangeInSeconds = 0;
 
-// Check if Accelerometer can be accessed
-if (window.DeviceMotionEvent == undefined) {
-    //No accelerometer is present. Use buttons. 
-    alert("no accelerometer");
-}
-else {
-    alert("accelerometer found");
+function startDataCollection() {
+    // Get the selected time range from the dropdown
+    timeRangeInSeconds = parseInt(document.querySelector("#time-range").value) * 3600;
+
+    // Disable the start button and enable the stop button
+    document.getElementById("start-btn").disabled = true;
+    document.getElementById("stop-btn").disabled = false;
+
+    // Start data collection
+    if (window.DeviceMotionEvent) {
+      if (typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+          .then(permissionState => {
+            if (permissionState === 'granted') {
+              startAccelerometer();
+              // Start a timer to stop data collection after the selected time range
+              dataCollectionTimer = setTimeout(stopDataCollection, timeRangeInSeconds * 1000);
+            } else {
+              alert('Permission for motion sensors denied. Accelerometer data cannot be accessed.');
+            }
+          })
+          .catch(console.error);
+      } else {
+        startAccelerometer();
+        dataCollectionTimer = setTimeout(stopDataCollection, timeRangeInSeconds * 1000);
+      }
+    } else {
+      alert("Motion sensors not supported. Accelerometer data cannot be accessed.");
+    }
+  }
+
+  function stopDataCollection() {
+    // Stop data collection
+    clearTimeout(dataCollectionTimer);
+    isDataCollectionRunning = false;
+
+    // Disable the stop button and enable the start button
+    document.getElementById("start-btn").disabled = false;
+    document.getElementById("stop-btn").disabled = true;
+
+    // Remove accelerometer event listener to stop data collection
+    window.removeEventListener("devicemotion", accelerometerUpdate, true);
+  }
+
+  // Function to start accelerometer data capture
+  function startAccelerometer() {
+    isDataCollectionRunning = true;
     window.addEventListener("devicemotion", accelerometerUpdate, true);
-}
+  }
 
-function accelerometerUpdate(e) {
-    var aX = event.accelerationIncludingGravity.x*1;
-    var aY = event.accelerationIncludingGravity.y*1;
-    var aZ = event.accelerationIncludingGravity.z*1;
+  function accelerometerUpdate(e) {
+    if (!isDataCollectionRunning) return; // Check if data collection is running
+
+    var aX = event.accelerationIncludingGravity.x * 1;
+    var aY = event.accelerationIncludingGravity.y * 1;
+    var aZ = event.accelerationIncludingGravity.z * 1;
 
     x.innerText = aX;
     y.innerText = aY;
     z.innerText = aZ;
 
-     // Send accelerometer data to Flask server
-     sendDataToServer({ x: aX, y: aY, z: aZ });
- }
- 
-function sendDataToServer(data) {
+    // Send accelerometer data to Flask server
+    sendDataToServer({ x: aX, y: aY, z: aZ });
+  }
 
-    // Make an AJAX POST request to your Flask server
-    fetch('https://25db-42-190-231-26.ngrok.io/result', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+  function sendDataToServer(data) {
+    // Make an AJAX POST request to Flask server
+    fetch('https://192.168.100.128:5000/result', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
     })
-        .then(response => response.text())
-        .then(data => {
-            predictionResult.innerText = "Prediction: " + data;
-            console.log(data)
-        })
-        .catch(error => console.error('Error:', error));
-}
+      .then(response => response.text())
+      .then(data => {
+        predictionResult.innerText = "Prediction: " + data;
+        console.log(data);
+      })
+      .catch(error => console.error('Error:', error));
+
+    // Check if the data collection time is over and stop data collection
+    if (timeRangeInSeconds > 0) {
+      setTimeout(() => {
+        stopDataCollection();
+      }, timeRangeInSeconds * 1000);
+    }
+  }
 
  </script>
 </html>
